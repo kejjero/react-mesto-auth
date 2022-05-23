@@ -8,8 +8,13 @@ import AddPlacePopup from "./AddPlacePopup";
 import ConfirmDeletePopup from "./ConfirmDeletePopup";
 import {useEffect, useState} from "react";
 import api from "../utils/api";
-import {CurrentUserContext} from '../contexts/CurrentUserContext';
-import {userContext} from '../utils/utils'
+import {CurrentUserContext} from "../contexts/CurrentUserContext";
+import {userContext} from "../utils/utils"
+import {Routes, Route} from "react-router-dom";
+import Login from "./auth/Login";
+import Register from "./auth/Register";
+import ProtectedRoute from "./auth/ProtectedRoute";
+import * as auth from "../utils/auth"
 
 function App() {
     const [isEditProfilePopupOpen, setIsEditProfilePopupOpen] = useState(false);
@@ -20,6 +25,11 @@ function App() {
     const [currentUser, setCurrentUser] = useState(userContext)
     const [cards, setCards] = useState([])
     const [cardToRemove, setCardToRemove] = useState({})
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [userData, setUserData] = useState({
+        username: '',
+        email: ''
+    })
 
     useEffect(() => {
         Promise.all([api.getUserInfo(), api.getCards()])
@@ -135,19 +145,51 @@ function App() {
             })
     }
 
+    // АВТОРИЗАЦИЯ ПОЛЬЗОВАТЕЛЯ
+
+
+    function handleRegister(email, password) {
+        auth.register(password, email)
+            .then(response => {
+                console.log('register', response)
+
+            })
+    }
+
+    function handleLogin(email, password) {
+        auth.login(password, email)
+            .then(response => {
+                console.log('login: ', response)
+                if (response) {
+                    setIsLoggedIn(true)
+                    localStorage.setItem('token', response.token)
+                }
+            })
+    }
+
     return (
         <CurrentUserContext.Provider value={currentUser}>
-            <Header/>
-            <Main
-                openEditProfile={handleEditProfileClick}
-                openAddPlace={handleAddPlaceClick}
-                openAvatar={handleEditAvatarClick}
-                openDeleteCard={handleDeleteCardClick}
-                onCardClick={handleCardClick}
-                onCardLike={handleCardLike}
-                onCardDelete={confirmDeleteCard}
-                cards={cards}
-            />
+            <Header isLoggedIn={isLoggedIn}/>
+            <Routes>
+                <Route exact path='/sign-up' element={<Register onRegister={handleRegister}/>}/>
+                <Route exact path='/sign-in' element={<Login onLogin={handleLogin}/>}/>
+                <Route path='/' element={
+                    <ProtectedRoute isLoggedIn={isLoggedIn}>
+                        <Main
+                            openEditProfile={handleEditProfileClick}
+                            openAddPlace={handleAddPlaceClick}
+                            openAvatar={handleEditAvatarClick}
+                            openDeleteCard={handleDeleteCardClick}
+                            onCardClick={handleCardClick}
+                            onCardLike={handleCardLike}
+                            onCardDelete={confirmDeleteCard}
+                            cards={cards}
+                        />
+                        <Footer/>
+                    </ProtectedRoute>
+                }
+                />
+            </Routes>
             <ImagePopup card={selectedCard} onClose={closeAllPopups}/>
             <EditProfilePopup
                 isOpen={isEditProfilePopupOpen}
@@ -170,7 +212,6 @@ function App() {
                 card={cardToRemove}
                 onSubmitDelete={handleCardDelete}
             />
-            <Footer/>
         </CurrentUserContext.Provider>
     )
 }
