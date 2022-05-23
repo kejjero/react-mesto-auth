@@ -1,6 +1,6 @@
 .header {
 	display: flex;
-	flex-direction: column;
+	align-items: center;
 	justify-content: space-between;
 	padding: 45px 0 40px 0;
 	max-width: 880px;
@@ -8,8 +8,25 @@
 	border-bottom: 1px solid rgba(84, 84, 84, 0.7);
 }
 
+.header__enter {
+	color: #fff;
+	cursor: pointer;
+	font-weight: 400;
+	font-size: 18px;
+	line-height: 22px;
+	transition: opacity ease-in-out 0.2s;
+}
+
+.header__enter:hover{
+	opacity: 0.6;
+}
+
 @media screen and (max-width: 540px) {
 	.header {
 		padding: 28px 0 31px 0;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
 	}
 }
+
