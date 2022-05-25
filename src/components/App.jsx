@@ -10,26 +10,31 @@ import {useEffect, useState} from "react";
 import api from "../utils/api";
 import {CurrentUserContext} from "../contexts/CurrentUserContext";
 import {userContext} from "../utils/utils"
-import {Routes, Route} from "react-router-dom";
-import Login from "./auth/Login";
-import Register from "./auth/Register";
-import ProtectedRoute from "./auth/ProtectedRoute";
+import {Routes, Route, useNavigate} from "react-router-dom";
+import Login from "./Login";
+import Register from "./Register";
+import ProtectedRoute from "./ProtectedRoute";
 import * as auth from "../utils/auth"
+import InfoTooltip from "./InfoTooltip";
 
 function App() {
     const [isEditProfilePopupOpen, setIsEditProfilePopupOpen] = useState(false);
     const [isAddPlacePopupOpen, setIsAddPlacePopupOpen] = useState(false);
     const [isEditAvatarPopupOpen, setIsEditAvatarPopupOpen] = useState(false);
     const [isDeleteCardPopupOpen, setIsDeleteCardPopupOpen] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false)
+    const [isOpenInfoTooltip, setIsOpenInfoTooltip] = useState(false)
     const [selectedCard, setSelectedCard] = useState({})
     const [currentUser, setCurrentUser] = useState(userContext)
     const [cards, setCards] = useState([])
     const [cardToRemove, setCardToRemove] = useState({})
     const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [userData, setUserData] = useState({
-        username: '',
-        email: ''
-    })
+    const [userEmail, setUserEmail] = useState('')
+    const navigate = useNavigate()
+
+    useEffect(() => {
+        checkToken()
+    }, [])
 
     useEffect(() => {
         Promise.all([api.getUserInfo(), api.getCards()])
@@ -62,12 +67,18 @@ function App() {
         setSelectedCard(selectedCard)
     }
 
+
+    function handleInfoTooltip() {
+        isOpenInfoTooltip(true)
+    }
+
     // Закрытие всех попапов
     function closeAllPopups() {
         setIsEditProfilePopupOpen(false)
         setIsAddPlacePopupOpen(false)
         setIsEditAvatarPopupOpen(false)
         setIsDeleteCardPopupOpen(false)
+        setIsOpenInfoTooltip(false)
         setSelectedCard({})
         setCardToRemove({})
     }
@@ -145,31 +156,65 @@ function App() {
             })
     }
 
-    // АВТОРИЗАЦИЯ ПОЛЬЗОВАТЕЛЯ
-
+    // ----------------------------------------------------------------------
+    //  Регистрация и авторизация пользователя
+    // ----------------------------------------------------------------------
 
     function handleRegister(email, password) {
         auth.register(password, email)
-            .then(response => {
-                console.log('register', response)
-
+            .then((res) => {
+                if(res.data) {
+                    setIsSuccess(true)
+                    setIsOpenInfoTooltip(true);
+                    navigate('/sign-in')
+                } else {
+                    // если регистрация не прошла:
+                    // * отправляем данные в попап и уведомляем пользователя об ошибке
+                    setIsSuccess(false)
+                    setIsOpenInfoTooltip(true)
+                }
+            })
+            .catch(() => {
+                setIsSuccess(false)
+                setIsOpenInfoTooltip(true)
             })
     }
 
     function handleLogin(email, password) {
         auth.login(password, email)
             .then(response => {
-                console.log('login: ', response)
                 if (response) {
-                    setIsLoggedIn(true)
                     localStorage.setItem('token', response.token)
+                    setIsLoggedIn(true)
+                    navigate('/')
+                    setUserEmail(email)
+                    handleInfoTooltip()
                 }
             })
     }
 
+    function checkToken() {
+        const token = localStorage.getItem('token');
+        if(token){
+            auth.checkToken(token)
+                .then(response => {
+                    setUserEmail(response.data.email)
+                    setIsLoggedIn(true)
+                    navigate('/')
+                })
+        }
+    }
+
+    function handleSignOut() {
+        localStorage.removeItem('token')
+        setIsLoggedIn(false)
+        navigate('/sign-in')
+        setUserEmail('')
+    }
+
     return (
         <CurrentUserContext.Provider value={currentUser}>
-            <Header isLoggedIn={isLoggedIn}/>
+            <Header isLoggedIn={isLoggedIn} userEmail={userEmail} handleSignOut={handleSignOut}/>
             <Routes>
                 <Route exact path='/sign-up' element={<Register onRegister={handleRegister}/>}/>
                 <Route exact path='/sign-in' element={<Login onLogin={handleLogin}/>}/>
@@ -211,6 +256,11 @@ function App() {
                 onClose={closeAllPopups}
                 card={cardToRemove}
                 onSubmitDelete={handleCardDelete}
+            />
+            <InfoTooltip
+                isOpen={isOpenInfoTooltip}
+                onClose={closeAllPopups}
+                isSuccess={isSuccess}
             />
         </CurrentUserContext.Provider>
     )

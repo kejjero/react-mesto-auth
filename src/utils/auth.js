@@ -10,7 +10,7 @@ export const register = (password, email) => {
         },
         body : JSON.stringify ({password, email})
     })
-        .then(response => checkResponse(response))
+        .then(checkResponse)
 }
 
 // запрос на авторизацию
@@ -23,13 +23,28 @@ export const login = (password, email) => {
         },
         body : JSON.stringify ({password, email})
     })
-        .then(response => checkResponse(response))
+        .then(checkResponse)
+}
+
+export const checkToken = (token) => {
+    return fetch(`${BASE_URl}/users/me`,{
+        method : "GET",
+        headers : {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization' : `Bearer ${token}`
+        }
+    })
+        .then((response) => {
+            if (response.ok) {
+                return response.json()
+            }
+        })
 }
 
 const checkResponse = (response) => {
     try {
         if (response.ok) {
-            console.log('register: ', response)
             return response.json()
         }
     }  catch (error) {

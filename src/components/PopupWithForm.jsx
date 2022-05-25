@@ -1,6 +1,6 @@
 import React from "react";
 
-function PopupWithForm({isOpen, name, title, buttonText, children, onClose, onSubmit}) {
+function PopupWithForm({isOpen, name, title, buttonText, children, onClose, onSubmit, isInfoTooltip}) {
 
     const buttonName = `${buttonText ? buttonText : 'Сохранить'}`;
 
@@ -14,7 +14,7 @@ function PopupWithForm({isOpen, name, title, buttonText, children, onClose, onSu
                     onClick={onClose}
                 >
                 </button>
-                <h2 className="popup__title">{title}</h2>
+                {isInfoTooltip ? <></> : <h2 className="popup__title">{title}</h2>}
                 <form
                     className={"popup__form"}
                     method={"post"}
@@ -23,13 +23,14 @@ function PopupWithForm({isOpen, name, title, buttonText, children, onClose, onSu
                     onSubmit={onSubmit}
                 >
                     {children}
-                    <button
+                    {isInfoTooltip ? <></>:
+                        <button
                         type="submit"
                         className={`popup__button popup__button__save popup_${name}`}
                         value={buttonName}
-                    >
+                        >
                         {buttonName}
-                    </button>
+                    </button>}
                 </form>
             </div>
             <div className="popup__overlay" onClick={onClose}>

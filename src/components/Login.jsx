@@ -1,14 +1,11 @@
-import '../../blocks/auth/auth.css'
 import {useState} from "react";
-import {Link} from "react-router-dom";
 
-function Register({onRegister}) {
+function Login({onLogin}) {
 
     const [state, setState] = useState({
         password: '',
         email: ''
     })
-
 
     const handleChange = (event) => {
         const {name, value} = event.target;
@@ -21,16 +18,14 @@ function Register({onRegister}) {
     const handleSubmit = (e) => {
         e.preventDefault();
         const {email, password} = state;
-        console.log(state)
-        if (onRegister && email) {
-            onRegister(email, password)
+        if (onLogin && email) {
+            onLogin(email, password)
         }
     }
 
-
     return(
         <section className='auth'>
-            <h1 className='auth__title'>Регистрация</h1>
+            <h1 className='auth__title'>Вход</h1>
             <form className='auth__form' onSubmit={handleSubmit}>
                 <input
                     type="text"
@@ -48,11 +43,10 @@ function Register({onRegister}) {
                     value={state.password}
                     onChange={handleChange}
                 />
-                <button type="submit" className="auth__submit">Зарегистрироваться</button>
+                <button type="submit" className="auth__submit">Войти</button>
             </form>
-            <Link to='/sign-in' className='auth__authorization'>Уже зарегистрированы? Войти</Link>
         </section>
     )
 }
 
-export default Register;
+export default Login;
