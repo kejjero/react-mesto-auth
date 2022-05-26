@@ -18,17 +18,29 @@ import * as auth from "../utils/auth"
 import InfoTooltip from "./InfoTooltip";
 
 function App() {
+    // стейт открытия попапа "Редактировать профиль"
     const [isEditProfilePopupOpen, setIsEditProfilePopupOpen] = useState(false);
+    // стейт открытия попапа "Добавить карточку"
     const [isAddPlacePopupOpen, setIsAddPlacePopupOpen] = useState(false);
+    // стейт открытия попапа "Добавить аватар"
     const [isEditAvatarPopupOpen, setIsEditAvatarPopupOpen] = useState(false);
+    // стейт открытия попапа "Удалить карточку"
     const [isDeleteCardPopupOpen, setIsDeleteCardPopupOpen] = useState(false);
-    const [isSuccess, setIsSuccess] = useState(false)
+    // стейт открытия попапа InfoTooltip
     const [isOpenInfoTooltip, setIsOpenInfoTooltip] = useState(false)
+    // стейт статуса запросов для InfoTooltip
+    const [isSuccess, setIsSuccess] = useState(false)
+    // стейт селектора карточки для imagePopup
     const [selectedCard, setSelectedCard] = useState({})
+    // стейт определения пользователя
     const [currentUser, setCurrentUser] = useState(userContext)
+    // стейт карточек
     const [cards, setCards] = useState([])
+    // стейт определения карточки для удалаения
     const [cardToRemove, setCardToRemove] = useState({})
+    // стейт определения авторизации пользователя
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    // стейт определения почты
     const [userEmail, setUserEmail] = useState('')
     const navigate = useNavigate()
 
@@ -37,15 +49,17 @@ function App() {
     }, [])
 
     useEffect(() => {
-        Promise.all([api.getUserInfo(), api.getCards()])
-            .then(([userData, cardsData]) => {
-                setCurrentUser(userData)
-                setCards(cardsData)
-            })
-            .catch((err) => {
-                alert(err)
-            })
-    }, [])
+        if(isLoggedIn) {
+            Promise.all([api.getUserInfo(), api.getCards()])
+                .then(([userData, cardsData]) => {
+                    setCurrentUser(userData)
+                    setCards(cardsData)
+                })
+                .catch((err) => {
+                    alert(err)
+                })
+        }
+        }, [isLoggedIn])
 
     function handleEditProfileClick() {
         setIsEditProfilePopupOpen(true)
@@ -65,11 +79,6 @@ function App() {
 
     function handleCardClick(selectedCard) {
         setSelectedCard(selectedCard)
-    }
-
-
-    function handleInfoTooltip() {
-        isOpenInfoTooltip(true)
     }
 
     // Закрытие всех попапов
@@ -100,6 +109,7 @@ function App() {
             api.addLike(card._id)
                 .then((res) => {
                     setCards((cards) =>
+                        // добавляем лайк исходя из нового массива лайкнувших карточку
                         cards.map((item) => (item._id === card._id ? res : item)))
                 })
                 .catch((err) => {
@@ -121,9 +131,7 @@ function App() {
                 setCards((cards) =>
                     // исключаем удаленную карточку из нового массива карточек
                     cards.filter((item) => (item._id !== card._id))
-
-                ), closeAllPopups()
-            )
+                ), () => {closeAllPopups()})
             .catch((err) => {
                 alert(err)
             })
@@ -132,7 +140,7 @@ function App() {
     // запрос на апдейт профиля пользователя с новыми данными
     function handleUpdateUser({name, description}) {
         api.editProfile(name, description)
-            .then((res) => setCurrentUser(res), closeAllPopups())
+            .then((res) => setCurrentUser(res), () => {closeAllPopups()})
             .catch((err) => {
                 alert(err)
             })
@@ -141,7 +149,7 @@ function App() {
     // запрос на апдейт аватара пользователя с новой картинкой
     function handleUpdateAvatar({avatar}) {
         api.editAvatar(avatar)
-            .then((res) => setCurrentUser(res), closeAllPopups())
+            .then((res) => setCurrentUser(res), () => {closeAllPopups()})
             .catch((err) => {
                 alert(err)
             })
@@ -150,61 +158,77 @@ function App() {
     // запрос на добавление новой карточки
     function handleAddPlaceSubmit({namePlace, linkPlace}) {
         api.sendCard(namePlace, linkPlace)
-            .then((newCard) => setCards([newCard, ...cards]), closeAllPopups())
+            .then((newCard) => setCards([newCard, ...cards]), () => {closeAllPopups()})
             .catch((err) => {
                 alert(err)
             })
     }
 
-    // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------
     //  Регистрация и авторизация пользователя
-    // ----------------------------------------------------------------------
+    // ----------------------------------------------------------------
 
+    // регистрация пользователя
     function handleRegister(email, password) {
         auth.register(password, email)
             .then((res) => {
-                if(res.data) {
+                if (res.data) {
+                    // если в респонсе возвращается объект с данными пользователя:
+                    // уведомляем пользователя об удачной регистрации и меняем url на авторизацию
                     setIsSuccess(true)
                     setIsOpenInfoTooltip(true);
                     navigate('/sign-in')
                 } else {
-                    // если регистрация не прошла:
-                    // * отправляем данные в попап и уведомляем пользователя об ошибке
+                    // иначе уведомляем об ошибке
                     setIsSuccess(false)
                     setIsOpenInfoTooltip(true)
                 }
             })
-            .catch(() => {
+            .catch((err) => {
+                console.log(err)
                 setIsSuccess(false)
                 setIsOpenInfoTooltip(true)
             })
     }
 
+    // авторизация пользователя
     function handleLogin(email, password) {
         auth.login(password, email)
-            .then(response => {
-                if (response) {
-                    localStorage.setItem('token', response.token)
+            .then(res => {
+                // в респонсе проверяем наличие токена
+                // добавляем токен в локал сторедж и меняем стейт авторизации
+                // направляем пользователя на главную страницу
+                if (res.token) {
+                    localStorage.setItem('token', res.token)
                     setIsLoggedIn(true)
                     navigate('/')
                     setUserEmail(email)
-                    handleInfoTooltip()
                 }
+            })
+            .catch((err) => {
+                console.log(err)
+                setIsSuccess(false)
+                setIsOpenInfoTooltip(true)
             })
     }
 
+    // проверка наличия токена
     function checkToken() {
         const token = localStorage.getItem('token');
-        if(token){
+        if (token) {
+            // если есть токен - отправляем его на авторизацию
+            // в респонсе получаем данные пользователя
             auth.checkToken(token)
                 .then(response => {
                     setUserEmail(response.data.email)
                     setIsLoggedIn(true)
                     navigate('/')
                 })
+                .catch(err => console.log(err))
         }
     }
 
+    // удаление токена из локал сторедж
     function handleSignOut() {
         localStorage.removeItem('token')
         setIsLoggedIn(false)
