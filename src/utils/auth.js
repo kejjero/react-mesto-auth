@@ -26,6 +26,7 @@ export const login = (password, email) => {
         .then(checkResponse)
 }
 
+// запрос на проверку токена
 export const checkToken = (token) => {
     return fetch(`${BASE_URl}/users/me`,{
         method : "GET",
@@ -42,6 +43,7 @@ export const checkToken = (token) => {
         })
 }
 
+// проверка наличия респонса и преобразование его в джейсон
 const checkResponse = (response) => {
     try {
         if (response.ok) {
