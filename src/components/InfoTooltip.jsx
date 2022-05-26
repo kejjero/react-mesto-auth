@@ -3,8 +3,6 @@ import iconFail from "../images/infoTooltip__fail.svg"
 import iconSuccess from "../images/infoTooltip__success.svg"
 
 function InfoTooltip(props) {
-    // Я же могу использовать это окно для других запросов к API?
-    // В таком случае наверное лучше сделать через контекст?
     const statusTooltip = props.isSuccess ?
         {
             icon: iconSuccess,
