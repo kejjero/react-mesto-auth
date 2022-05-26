@@ -9,7 +9,6 @@ function Register({onRegister}) {
         email: ''
     })
 
-
     const handleChange = (event) => {
         const {name, value} = event.target;
         setState((prev) => ({
@@ -27,8 +26,7 @@ function Register({onRegister}) {
         }
     }
 
-
-    return(
+    return (
         <section className='auth'>
             <h1 className='auth__title'>Регистрация</h1>
             <form className='auth__form' onSubmit={handleSubmit}>
