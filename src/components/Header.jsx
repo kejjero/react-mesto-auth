@@ -9,7 +9,7 @@ function Header(props) {
         <header className='header'>
             <Link to={'/'} className='header__logo' src={logo} alt='Логотип'/>
             <nav className='header__wrapper'>
-                {props.isLoggedIn ? <p className='header__email'>{props.userEmail}</p> : <></>}
+                {props.isLoggedIn && <p className='header__email'>{props.userEmail}</p>}
                 {props.isLoggedIn
                     ? (
                         <Link to="/sign-in"
